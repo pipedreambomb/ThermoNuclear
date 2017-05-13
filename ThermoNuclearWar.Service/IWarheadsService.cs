@@ -1,6 +1,4 @@
-﻿using ThermoNuclearWar.Models;
-
-namespace ThermoNuclearWar.Controllers
+namespace ThermoNuclearWar.Service
 {
     public interface IWarheadsService
     {

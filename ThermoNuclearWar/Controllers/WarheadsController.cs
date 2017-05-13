@@ -1,14 +1,13 @@
 using System;
-using System.ComponentModel.DataAnnotations;
 using System.Web.Mvc;
-using ThermoNuclearWar.Models;
+using ThermoNuclearWar.Service;
+using ThermoNuclearWar.Web.Models;
 
-namespace ThermoNuclearWar.Controllers
+namespace ThermoNuclearWar.Web.Controllers
 {
     public class WarheadsController : Controller
     {
         private readonly IWarheadsService _warheadsService;
-        private bool _alreadyLaunched;
 
         // Poor man's dependency injection, as it didn't seem worth setting
         // up an IoC container for this simple site.
@@ -39,18 +38,6 @@ namespace ThermoNuclearWar.Controllers
             LastLaunched = DateTime.UtcNow;
 
             return new EmptyResult();
-        }
-    }
-
-    public class WarheadsService : IWarheadsService {
-        public bool IsOffline()
-        {
-            return true;
-        }
-
-        public void Launch(string passphrase)
-        {
-            throw new NotImplementedException();
         }
     }
 }

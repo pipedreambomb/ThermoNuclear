@@ -51,3 +51,6 @@ _NCrunch*
 packages
 bin
 obj
+*.suo
+*.ncrunchproject
+ThermoNuclearWar/ThermoNuclearWar.Web.csproj.user

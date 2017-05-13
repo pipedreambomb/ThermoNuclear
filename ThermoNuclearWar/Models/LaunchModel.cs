@@ -1,4 +1,4 @@
-﻿namespace ThermoNuclearWar.Models
+﻿namespace ThermoNuclearWar.Web.Models
 {
     public class LaunchModel
     {

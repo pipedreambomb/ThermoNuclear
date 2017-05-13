@@ -5,10 +5,11 @@ using FluentAssertions.Mvc;
 using NSubstitute;
 using NUnit.Framework;
 using Ploeh.AutoFixture;
-using ThermoNuclearWar.Controllers;
-using ThermoNuclearWar.Models;
+using ThermoNuclearWar.Service;
+using ThermoNuclearWar.Web.Controllers;
+using ThermoNuclearWar.Web.Models;
 
-namespace ThermoNuclearWar.Tests.Controllers
+namespace ThermoNuclearWar.Web.Tests.Controllers
 {
     [TestFixture]
     public class WarheadsControllerTests

@@ -1,6 +1,6 @@
 using System;
 
-namespace ThermoNuclearWar.Controllers
+namespace ThermoNuclearWar.Web.Controllers
 {
     public class AlreadyLaunchedException : Exception {}
 }

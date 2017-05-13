@@ -1,6 +1,6 @@
 using System;
 
-namespace ThermoNuclearWar
+namespace ThermoNuclearWar.Web
 {
     public class WarheadsServiceOfflineException : Exception {}
 }

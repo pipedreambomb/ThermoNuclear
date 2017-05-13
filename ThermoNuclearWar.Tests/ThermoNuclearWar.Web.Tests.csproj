@@ -9,8 +9,8 @@
     <ProjectGuid>{5041668B-2F1D-4ADA-8E98-6C18F21E8AD3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ThermoNuclearWar.Tests</RootNamespace>
-    <AssemblyName>ThermoNuclearWar.Tests</AssemblyName>
+    <RootNamespace>ThermoNuclearWar.Web.Tests</RootNamespace>
+    <AssemblyName>ThermoNuclearWar.Web.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -116,9 +116,13 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ThermoNuclearWar\ThermoNuclearWar.csproj">
+    <ProjectReference Include="..\ThermoNuclearWar.Service\ThermoNuclearWar.Service.csproj">
+      <Project>{3B6A8A2E-D262-471F-908E-C3E9F582A41B}</Project>
+      <Name>ThermoNuclearWar.Service</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ThermoNuclearWar\ThermoNuclearWar.Web.csproj">
       <Project>{0B1ADBBD-AA79-4826-9DF8-1E5B09D0F791}</Project>
-      <Name>ThermoNuclearWar</Name>
+      <Name>ThermoNuclearWar.Web</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
