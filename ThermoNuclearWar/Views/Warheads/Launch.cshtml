@@ -1,0 +1,18 @@
+﻿@using ThermoNuclearWar.Controllers
+@model ThermoNuclearWar.Models.LaunchModel
+
+@{
+    ViewBag.Title = "Warheads";
+}
+
+<h2>Welcome, Mr. President</h2>
+<p>Current status of warheads: @Model.Status (refresh page to check again)</p>
+
+<p>Please enter your passphrase to launch warheads.</p>
+
+@using (Html.BeginForm(nameof(WarheadsController.Launch)))
+{
+    @Html.AntiForgeryToken()
+    @Html.PasswordFor(model => model.Passphrase)
+    <input type="submit" value="Launch"/>
+}
