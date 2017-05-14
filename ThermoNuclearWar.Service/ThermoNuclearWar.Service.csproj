@@ -89,11 +89,20 @@
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AlreadyLaunchedException.cs" />
+    <Compile Include="ILastLaunchedProvider.cs" />
     <Compile Include="IWarheadsService.cs" />
+    <Compile Include="LastLaunchedProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WarheadsApiException.cs" />
     <Compile Include="WarheadsService.cs" />
     <Compile Include="WrongPassphraseException.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\csharp-client\src\IO.Swagger\IO.Swagger.csproj">
+      <Project>{09c5ca5b-5082-48bd-bc80-9c8fe2acdac0}</Project>
+      <Name>IO.Swagger</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

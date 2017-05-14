@@ -5,6 +5,6 @@ namespace ThermoNuclearWar.Service
     public interface IWarheadsService
     {
         Task<bool> IsOffline();
-        void Launch(string passphrase);
+        Task Launch(string passphrase);
     }
 }

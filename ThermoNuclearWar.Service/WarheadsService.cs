@@ -1,47 +1,44 @@
 using System;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using IO.Swagger.Api;
+using IO.Swagger.Model;
+using static IO.Swagger.Model.WarheadStatusResult.StatusEnum;
 
 namespace ThermoNuclearWar.Service
 {
-    public class WarheadsStatusModel
-    {
-        public string Status { get; set; }
-        public bool IsOffline => Status != "Online";
-    }
-
-
     public class WarheadsService : IWarheadsService
     {
+        internal const string CorrectPassphrase = "NICEGAMEOFCHESS";
+        private readonly IWarheadsApi _apiClient;
+        private readonly ILastLaunchedProvider _lastLaunchedProvider;
 
-        private static HttpClient client;
+        // Poor man's dependency injection, as it didn't seem worth setting
+        // up an IoC container for this simple site.
+        public WarheadsService() : this(new WarheadsApi(), new LastLaunchedProvider()) {}
 
-        static WarheadsService()
+        public WarheadsService(IWarheadsApi apiClient, ILastLaunchedProvider lastLaunchedProvider)
         {
-            client = new HttpClient();
-            client.BaseAddress = new Uri("http://gitland.azurewebsites.net:80/api/warheads/");
-            // accept JSON
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _apiClient = apiClient;
+            _lastLaunchedProvider = lastLaunchedProvider;
         }
 
         public async Task<bool> IsOffline()
         {
-                WarheadsStatusModel status = null;
-                HttpResponseMessage response = await client.GetAsync("status");
-                if (response.IsSuccessStatusCode)
-                {
-                    status = await response.Content.ReadAsAsync<WarheadsStatusModel>();
-                }
-                return status.IsOffline;
+            var status = await _apiClient.WarheadsGetStatusAsync();
+            return status.Status == Offline;
         }
 
-        public void Launch(string passphrase)
+        public async Task Launch(string passphrase)
         {
-            if(passphrase != "NICEGAMEOFCHESS") throw new WrongPassphraseException();
-            
+            if(passphrase != CorrectPassphrase) throw new WrongPassphraseException();
 
+            if(_lastLaunchedProvider.LastLaunched > DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(5)))
+                throw new AlreadyLaunchedException();
+
+            var result = await _apiClient.WarheadsLaunchAsync(passphrase);
+
+            if (result.Result == WarheadLaunchResult.ResultEnum.Failure)
+                throw new WarheadsApiException(result.Message);
         }
     }
 }
