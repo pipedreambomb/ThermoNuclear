@@ -39,7 +39,9 @@ namespace ThermoNuclearWar.Service
 
         public void Launch(string passphrase)
         {
-            throw new NotImplementedException();
+            if(passphrase != "NICEGAMEOFCHESS") throw new WrongPassphraseException();
+            
+
         }
     }
 }

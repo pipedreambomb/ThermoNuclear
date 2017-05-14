@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 using FluentAssertions;
@@ -24,6 +23,12 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
         {
             _warheadsService = Substitute.For<IWarheadsService>();
             SUT = new WarheadsController(_warheadsService);
+        }
+
+        protected void AssertModelStateHasErrorForPropertyNamed(string name)
+        {
+            SUT.ModelState[name].Should().NotBeNull();
+            SUT.ModelState[name].Errors.Should().HaveCount(1);
         }
 
         public class Launch_GET : WarheadsControllerTests
@@ -78,23 +83,23 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
             public class When_status_is_offline : WarheadsControllerTests
             {
                 [Test]
-                public void It_throws()
+                public async Task It_adds_model_error()
                 {
                     // Arrange
                     _warheadsService.IsOffline().Returns(true);
 
                     // Act
-                    Func<Task> act = async () => await SUT.Launch(new LaunchModel());
+                    ActionResult actual = await SUT.Launch(new LaunchModel());
 
                     // Assert
-                    act.ShouldThrow<WarheadsServiceOfflineException>();
+                    actual.GetModel().ServiceError.Should().Be("Service is offline.");
                 }
             }
 
             public class When_status_is_online_and_passcode_is_wrong : WarheadsControllerTests
             {
                 [Test]
-                public void It_throws()
+                public async Task It_adds_model_error()
                 {
                     // Arrange
                     _warheadsService.IsOffline().Returns(false);
@@ -102,17 +107,17 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
                                     .Throw<WrongPassphraseException>();
 
                     // Act
-                    Func<Task> act = async () => await SUT.Launch(new LaunchModel());
+                    await SUT.Launch(new LaunchModel());
 
                     // Assert
-                    act.ShouldThrow<WrongPassphraseException>();
+                    AssertModelStateHasErrorForPropertyNamed(nameof(LaunchModel.Passphrase));
                 }
             }
 
-            public class When_status_is_online_and_passcode_is_correct : WarheadsControllerTests
+            public class When_status_is_online_and_passcode_is_correct_and_service_call_works : WarheadsControllerTests
             {
                 [Test]
-                public async Task It_returns_empty_result()
+                public async Task It_returns_view_with_no_errors()
                 {
                     // Arrange
                     string correctPassphrase = new Fixture().Create<string>();
@@ -124,38 +129,60 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
                     ActionResult actual = await SUT.Launch(new LaunchModel {Passphrase = correctPassphrase});
 
                     // Assert
-                    actual.Should().BeEmptyResult();
+                    actual.Should().BeViewResult();
+                    SUT.ModelState.Should().BeEmpty();
                 }
             }
-        }
-
-        public class When_already_launched_in_last_five_minutes : WarheadsControllerTests
-        {
-            [Test]
-            public async Task It_throws()
+            public class When_status_is_online_and_passcode_is_correct_and_service_call_fails : WarheadsControllerTests
             {
-                // Act
-                await SUT.Launch(new LaunchModel());
-                Func<Task<ActionResult>> act = async () => await SUT.Launch(new LaunchModel());
+                [Test]
+                public async Task It_returns_model_with_ServiceError_from_service()
+                {
+                    // Arrange
+                    string expectedErrorMessage = new Fixture().Create<string>();
+                    _warheadsService.IsOffline().Returns(false);
+                    _warheadsService.WhenForAnyArgs(ws => ws.Launch(null))
+                                    .Throw(new WarheadsApiException(expectedErrorMessage));
 
-                // Assert
-                act.ShouldThrow<AlreadyLaunchedException>();
+                    // Act
+                    ActionResult actual = await SUT.Launch(new LaunchModel());
+
+                    // Assert
+                    actual.GetModel().ServiceError.Should().Be(expectedErrorMessage);
+                }
             }
-        }
-        public class When_already_launched_in_over_five_minutes : WarheadsControllerTests
-        {
-            [Test]
-            public async Task It_works()
-            {
-                // Act
-                await SUT.Launch(new LaunchModel());
-                SUT.LastLaunched = DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(value: 5)
-                                                                    // allow extra time for the test to run
-                                                                    .Add(TimeSpan.FromSeconds(value: 10)));
-                Func<Task> act = async () => await SUT.Launch(new LaunchModel());
 
-                // Assert
-                act.ShouldNotThrow();
+            public class When_already_launched_in_last_five_minutes : WarheadsControllerTests
+            {
+                [Test]
+                public async Task It_adds_model_error()
+                {
+                    // Act
+                    _warheadsService.IsOffline().Returns(false);
+                    _warheadsService.WhenForAnyArgs(ws => ws.Launch(null))
+                                    .Throw<AlreadyLaunchedException>();
+                    // Act
+                    await SUT.Launch(new LaunchModel());
+                    ActionResult actual = await SUT.Launch(new LaunchModel());
+
+                    // Assert
+                    actual.GetModel().ServiceError.Should().Be(
+                                                               "Too soon to launch again. Please allow 5 minutes to elapse.");
+                }
+            }
+
+            public class When_already_launched_in_over_five_minutes : WarheadsControllerTests
+            {
+                [Test]
+                public async Task It_works()
+                {
+                    // Act
+                    await SUT.Launch(new LaunchModel());
+                    ActionResult actual = await SUT.Launch(new LaunchModel());
+
+                    // Assert
+                    actual.GetModel().ServiceError.Should().BeNullOrEmpty();
+                }
             }
         }
     }

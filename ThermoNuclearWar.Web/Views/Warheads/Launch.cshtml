@@ -1,4 +1,5 @@
-﻿@using ThermoNuclearWar.Web.Controllers
+﻿@using Microsoft.Ajax.Utilities
+@using ThermoNuclearWar.Web.Controllers
 @model ThermoNuclearWar.Web.Models.LaunchModel
 
 @{
@@ -8,11 +9,21 @@
 <h2>Welcome, Mr. President</h2>
 <p>Current status of warheads: @(Model.ServiceIsOffline ? "Offline" : "Online") (refresh page to check again)</p>
 
-<p>Please enter your passphrase to launch warheads.</p>
+<p>Please enter your passphrase to launch warheads:</p>
 
 @using (Html.BeginForm(nameof(WarheadsController.Launch)))
 {
     @Html.AntiForgeryToken()
-    @Html.PasswordFor(model => model.Passphrase)
-    <input type="submit" value="Launch"/>
+    <p>
+        @Html.PasswordFor(model => model.Passphrase)
+        <input type="submit" value="Launch"  onclick="return confirm('Are you sure?')" />
+    </p>
+
+    <p>
+        @Html.ValidationMessageFor(model => model.Passphrase)
+    </p>
+    if (Model.ServiceError.HasValue())
+    {
+  
+    }
 }

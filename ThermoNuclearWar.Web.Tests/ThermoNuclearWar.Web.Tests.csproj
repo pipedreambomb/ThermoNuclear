@@ -106,8 +106,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Controllers\WarheadsControllerTests.cs" />
+    <Compile Include="Controllers\ActionResultTestExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Controllers\WarheadsControllerTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="App.config" />

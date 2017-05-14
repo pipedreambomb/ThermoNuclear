@@ -19,10 +19,6 @@ namespace ThermoNuclearWar.Web.Controllers
             _warheadsService = warheadsService;
         }
 
-        // I'm cheating a bit here. It would be better to make this
-        // testable by wrapping the static DateTime.UtcNow in a mockable interface.
-        internal DateTime? LastLaunched { get; set; }
-
         [HttpGet]
         public async Task<ActionResult> Launch()
         {
@@ -32,13 +28,32 @@ namespace ThermoNuclearWar.Web.Controllers
         [HttpPost]
         public async Task<ActionResult> Launch(LaunchModel model)
         {
-            if(await _warheadsService.IsOffline()) throw new WarheadsServiceOfflineException();
-            if(LastLaunched > DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(5))) throw new AlreadyLaunchedException();
+            if (await _warheadsService.IsOffline())
+            {
+                model.ServiceError = "Service is offline.";
+                return View(model);
+            }
+            try
+            {
+                _warheadsService.Launch(model.Passphrase);
+            }
+            catch (WrongPassphraseException)
+            {
+                ModelState.AddModelError(nameof(model.Passphrase), "Wrong passphrase.");
+                return View(model);
+            }
+            catch (AlreadyLaunchedException)
+            {
+                model.ServiceError = "Too soon to launch again. Please allow 5 minutes to elapse.";
+                return View(model);
+            }
+            catch (WarheadsApiException exception)
+            {
+                model.ServiceError = exception.Message;
+                return View(model);
+            }
 
-            _warheadsService.Launch(model.Passphrase);
-            LastLaunched = DateTime.UtcNow;
-
-            return new EmptyResult();
+            return View(model);
         }
     }
 }
