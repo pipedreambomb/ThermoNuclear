@@ -94,6 +94,7 @@
     <Compile Include="IWarheadsService.cs" />
     <Compile Include="StaticWrappers\LastLaunchedProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Exceptions\WarheadLaunchResultFactory.cs" />
     <Compile Include="WarheadsService.cs" />
     <Compile Include="Exceptions\WrongPassphraseException.cs" />
   </ItemGroup>

@@ -1,6 +1,6 @@
 using IO.Swagger.Model;
 
-namespace ThermoNuclearWar.Web.Controllers
+namespace ThermoNuclearWar.Service.Exceptions
 {
     public static class WarheadLaunchResultFactory {
         public static WarheadLaunchResult Fail(string reason)

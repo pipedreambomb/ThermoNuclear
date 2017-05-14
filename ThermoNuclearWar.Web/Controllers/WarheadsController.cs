@@ -9,6 +9,9 @@ namespace ThermoNuclearWar.Web.Controllers
     public class WarheadsController : Controller
     {
         public const string AlreadyLaunchedErrorMessage = "Too soon to launch again. Please allow 5 minutes to elapse, in order to avoid premature detonation and the concomitant annihilation of Gitland.";
+        private const string WrongPassphrase = "Wrong passphrase.";
+        public const string ServiceIsOffline = "Service is offline.";
+
         private readonly IWarheadsService _warheadsService;
 
         // Poor man's dependency injection, as it didn't seem worth setting
@@ -33,7 +36,7 @@ namespace ThermoNuclearWar.Web.Controllers
 
             if (await _warheadsService.IsOffline())
             {
-                model.LaunchResult = WarheadLaunchResultFactory.Fail("Service is offline.");
+                model.LaunchResult = WarheadLaunchResultFactory.Fail(ServiceIsOffline);
                 model.ServiceIsOffline = true;
                 return View(model);
             }
@@ -44,7 +47,7 @@ namespace ThermoNuclearWar.Web.Controllers
             }
             catch (WrongPassphraseException)
             {
-                ModelState.AddModelError(nameof(model.Passphrase), "Wrong passphrase.");
+                ModelState.AddModelError(nameof(model.Passphrase), WrongPassphrase);
                 return View(model);
             }
             catch (AlreadyLaunchedException)

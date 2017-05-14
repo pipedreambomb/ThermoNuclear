@@ -54,3 +54,4 @@ obj
 *.suo
 *.ncrunchproject
 ThermoNuclearWar/ThermoNuclearWar.Web.csproj.user
+*.user

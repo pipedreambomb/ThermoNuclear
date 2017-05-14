@@ -31,7 +31,7 @@ namespace ThermoNuclearWar.Service
 
         public async Task<bool> IsOffline()
         {
-            var status = await _apiClient.WarheadsGetStatusAsync();
+            WarheadStatusResult status = await _apiClient.WarheadsGetStatusAsync();
             return status.Status == Offline;
         }
 

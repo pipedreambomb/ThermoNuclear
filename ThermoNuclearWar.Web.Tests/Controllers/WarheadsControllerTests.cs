@@ -95,7 +95,7 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
                     ActionResult actual = await SUT.Launch(new LaunchModel());
 
                     // Assert
-                    AssertLaunchResultFailureWithMessage(actual, "Service is offline.");
+                    AssertLaunchResultFailureWithMessage(actual, WarheadsController.ServiceIsOffline);
                 }
 
                 [Test]
@@ -194,6 +194,9 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
                 [Test]
                 public async Task It_works()
                 {
+                    // Arrange
+                    // nothing to do here, just don't throw an AlreadyLaunchedException either time
+
                     // Act
                     await SUT.Launch(new LaunchModel());
                     await SUT.Launch(new LaunchModel());
