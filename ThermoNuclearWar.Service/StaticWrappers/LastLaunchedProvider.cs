@@ -1,6 +1,6 @@
 using System;
 
-namespace ThermoNuclearWar.Service
+namespace ThermoNuclearWar.Service.StaticWrappers
 {
     /// <summary>
     /// Static wrapper class to allow unit tests to run independently.
@@ -10,9 +10,9 @@ namespace ThermoNuclearWar.Service
     /// </summary>
     public class LastLaunchedProvider : ILastLaunchedProvider
     {
-        private static DateTime _lastLaunched;
+        private static DateTime? _lastLaunched;
 
-        public DateTime LastLaunched
+        public DateTime? LastLaunched
         {
             get { return _lastLaunched; }
             set { _lastLaunched = value; }

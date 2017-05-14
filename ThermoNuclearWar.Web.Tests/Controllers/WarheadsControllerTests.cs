@@ -2,12 +2,15 @@ using System.Threading.Tasks;
 using System.Web.Mvc;
 using FluentAssertions;
 using FluentAssertions.Mvc;
+using IO.Swagger.Model;
 using NSubstitute;
 using NUnit.Framework;
 using Ploeh.AutoFixture;
 using ThermoNuclearWar.Service;
+using ThermoNuclearWar.Service.Exceptions;
 using ThermoNuclearWar.Web.Controllers;
 using ThermoNuclearWar.Web.Models;
+using static IO.Swagger.Model.WarheadLaunchResult.ResultEnum;
 
 namespace ThermoNuclearWar.Web.Tests.Controllers
 {
@@ -92,7 +95,20 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
                     ActionResult actual = await SUT.Launch(new LaunchModel());
 
                     // Assert
-                    actual.GetModel().ServiceError.Should().Be("Service is offline.");
+                    AssertLaunchResultFailureWithMessage(actual, "Service is offline.");
+                }
+
+                [Test]
+                public async Task It_sets_model_ServiceIsOffline_to_true()
+                {
+                    // Arrange
+                    _warheadsService.IsOffline().Returns(true);
+
+                    // Act
+                    ActionResult actual = await SUT.Launch(new LaunchModel());
+
+                    // Assert
+                    actual.GetModel().ServiceIsOffline.Should().BeTrue();
                 }
             }
 
@@ -133,22 +149,23 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
                     SUT.ModelState.Should().BeEmpty();
                 }
             }
-            public class When_status_is_online_and_passcode_is_correct_and_service_call_fails : WarheadsControllerTests
+            public class When_status_is_online_and_service_call_fails : WarheadsControllerTests
             {
                 [Test]
                 public async Task It_returns_model_with_ServiceError_from_service()
                 {
                     // Arrange
-                    string expectedErrorMessage = new Fixture().Create<string>();
+                    var expectedResult = new Fixture().Create<WarheadLaunchResult>();
+
                     _warheadsService.IsOffline().Returns(false);
-                    _warheadsService.WhenForAnyArgs(ws => ws.Launch(null))
-                                    .Throw(new WarheadsApiException(expectedErrorMessage));
+                    _warheadsService.Launch(null)
+                                    .ReturnsForAnyArgs(Task.FromResult(expectedResult));
 
                     // Act
                     ActionResult actual = await SUT.Launch(new LaunchModel());
 
                     // Assert
-                    actual.GetModel().ServiceError.Should().Be(expectedErrorMessage);
+                    actual.GetModel().LaunchResult.Should().Be(expectedResult);
                 }
             }
 
@@ -166,8 +183,9 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
                     ActionResult actual = await SUT.Launch(new LaunchModel());
 
                     // Assert
-                    actual.GetModel().ServiceError.Should().Be(
-                                                               "Too soon to launch again. Please allow 5 minutes to elapse.");
+                    actual.GetModel()
+                          .LaunchResult.Message.Should()
+                          .Be(WarheadsController.AlreadyLaunchedErrorMessage);
                 }
             }
 
@@ -178,12 +196,22 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
                 {
                     // Act
                     await SUT.Launch(new LaunchModel());
-                    ActionResult actual = await SUT.Launch(new LaunchModel());
+                    await SUT.Launch(new LaunchModel());
 
                     // Assert
-                    actual.GetModel().ServiceError.Should().BeNullOrEmpty();
+                    SUT.ModelState.Should().BeEmpty();
                 }
             }
+        }
+
+        protected static void AssertLaunchResultFailureWithMessage(ActionResult actual, string message)
+        {
+            actual.GetModel()
+                  .LaunchResult.Result.Should()
+                  .Be(Failure);
+            actual.GetModel()
+                  .LaunchResult.Message.Should()
+                  .Be(message);
         }
     }
 }

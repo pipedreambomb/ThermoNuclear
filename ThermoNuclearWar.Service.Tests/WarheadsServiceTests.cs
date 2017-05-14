@@ -2,10 +2,13 @@
 using System.Threading.Tasks;
 using FluentAssertions;
 using IO.Swagger.Api;
+using IO.Swagger.Client;
 using IO.Swagger.Model;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
-using Ploeh.AutoFixture;
+using ThermoNuclearWar.Service.Exceptions;
+using ThermoNuclearWar.Service.StaticWrappers;
 using static IO.Swagger.Model.WarheadLaunchResult.ResultEnum;
 using static IO.Swagger.Model.WarheadStatusResult.StatusEnum;
 using static ThermoNuclearWar.Service.WarheadsService;
@@ -96,9 +99,9 @@ namespace ThermoNuclearWar.Service.Tests
                 {
                     // Arrange
                     MockLastLaunchedProvider.LastLaunched
-                                        .Returns(DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(5))
-                                                                // allow a little extra time for the test to run
-                                                                .Add(TimeSpan.FromSeconds(10)));
+                                            .Returns(DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(5))
+                                                             // allow a little extra time for the test to run
+                                                             .Add(TimeSpan.FromSeconds(10)));
 
                     // Act
                     Func<Task> act = async () => await SUT.Launch(CorrectPassphrase);
@@ -113,42 +116,57 @@ namespace ThermoNuclearWar.Service.Tests
                 public class When_service_call_returns_success : WarheadsServiceTests
                 {
                     [Test]
-                    public void It_does_not_throw()
+                    public async Task It_returns_success()
                     {
-                        // Arrange
-                        MockApi.WarheadsLaunchAsync(null)
-                               .ReturnsForAnyArgs(Task.FromResult(new WarheadLaunchResult
-                               {
-                                   Result = Success
-                               }));
                         // Act
-                        Func<Task> act = async () => await SUT.Launch(CorrectPassphrase);
+                        var actual = await SUT.Launch(CorrectPassphrase);
 
                         // Assert
-                        act.ShouldNotThrow();
+                        actual.Result.Should().Be(Success);
+                    }
+
+                    [Test]
+                    public async Task It_updates_LastLaunched()
+                    {
+                        // Act
+                        await SUT.Launch(CorrectPassphrase);
+
+                        // Assert
+                        // allow up to 3 seconds from now as being close enough, since the test needs time to run.
+                        MockLastLaunchedProvider.Received(1)
+                                                .LastLaunched = Arg.Is<DateTime>(that => Math.Abs(that.Subtract(DateTime.UtcNow)
+                                                                                                      .TotalSeconds) < 3);
+                    }
+
+                    [Test]
+                    public async Task It_calls_service_with_passcode_including_current_date()
+                    {
+                        // Act
+                        await SUT.Launch(CorrectPassphrase);
+
+                        // Assert
+                        await MockApi.Received(requiredNumberOfCalls: 1)
+                                     .WarheadsLaunchAsync(CorrectPasscode);
                     }
                 }
 
                 public class When_service_call_returns_failure : WarheadsServiceTests
                 {
                     [Test]
-                    public void It_throws_with_message_from_result()
+                    public async Task It_returns_result_parsed_from_error_JSON()
                     {
                         // Arrange
-                        var expectedErrorMessage = new Fixture().Create<string>();
+                        // Copied from real life error
+                        string jsonError = "{\"Result\":\"Failure\",\"Message\":\"Invalid Launch Code\"}";
+
                         MockApi.WarheadsLaunchAsync(null)
-                               .ReturnsForAnyArgs(Task.FromResult(new WarheadLaunchResult
-                               {
-                                   Result = Failure,
-                                   Message = expectedErrorMessage
-                               }));
+                               .ThrowsForAnyArgs(new ApiException(500, null, jsonError));
 
                         // Act
-                        Func<Task> act = async () => await SUT.Launch(CorrectPassphrase);
+                        var actual = await SUT.Launch(CorrectPassphrase);
 
                         // Assert
-                        act.ShouldThrow<WarheadsApiException>()
-                           .WithMessage(expectedErrorMessage);
+                        actual.Message.Should().Be("Invalid Launch Code");
                     }
                 }
             }

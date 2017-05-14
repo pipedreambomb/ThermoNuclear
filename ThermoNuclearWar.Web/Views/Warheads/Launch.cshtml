@@ -1,4 +1,4 @@
-﻿@using Microsoft.Ajax.Utilities
+﻿@using IO.Swagger.Model
 @using ThermoNuclearWar.Web.Controllers
 @model ThermoNuclearWar.Web.Models.LaunchModel
 
@@ -7,7 +7,11 @@
 }
 
 <h2>Welcome, Mr. President</h2>
-<p>Current status of warheads: @(Model.ServiceIsOffline ? "Offline" : "Online") (refresh page to check again)</p>
+<p>
+    Current status of warheads:
+    @Html.Raw(Model.ServiceIsOffline ? "<span class=service-error>Offline</span>" : "Online")
+    (refresh page to check again)
+</p>
 
 <p>Please enter your passphrase to launch warheads:</p>
 
@@ -16,14 +20,23 @@
     @Html.AntiForgeryToken()
     <p>
         @Html.PasswordFor(model => model.Passphrase)
-        <input type="submit" value="Launch"  onclick="return confirm('Are you sure?')" />
+        <input type="submit" value="Launch"
+               @Html.Raw(Model.ServiceIsOffline ? @"disabled title=""Unable to launch when warheads service is offline""" : "")
+               onclick="return confirm('Are you sure?')" />
     </p>
-
     <p>
         @Html.ValidationMessageFor(model => model.Passphrase)
     </p>
-    if (Model.ServiceError.HasValue())
+    if (Model.LaunchResult?.Result == WarheadLaunchResult.ResultEnum.Success)
     {
-  
+        <p>
+            Warheads launched successfully. <a target="_blank" href="https://en.wikipedia.org/wiki/J._Robert_Oppenheimer">Now you are become death, destroyer of worlds</a>.
+        </p>
+    }
+    else if (Model.LaunchResult?.Result == WarheadLaunchResult.ResultEnum.Failure)
+    {
+        <p>
+            I'm sorry, Mr President, but there was an error during launch: <span class="service-error">@Model.LaunchResult.Message</span>
+        </p>
     }
 }

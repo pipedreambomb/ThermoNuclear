@@ -1,13 +1,14 @@
-using System;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 using ThermoNuclearWar.Service;
+using ThermoNuclearWar.Service.Exceptions;
 using ThermoNuclearWar.Web.Models;
 
 namespace ThermoNuclearWar.Web.Controllers
 {
     public class WarheadsController : Controller
     {
+        public const string AlreadyLaunchedErrorMessage = "Too soon to launch again. Please allow 5 minutes to elapse, in order to avoid premature detonation and the concomitant annihilation of Gitland.";
         private readonly IWarheadsService _warheadsService;
 
         // Poor man's dependency injection, as it didn't seem worth setting
@@ -28,14 +29,18 @@ namespace ThermoNuclearWar.Web.Controllers
         [HttpPost]
         public async Task<ActionResult> Launch(LaunchModel model)
         {
+            if(ModelState.IsValid == false) return View(model);
+
             if (await _warheadsService.IsOffline())
             {
-                model.ServiceError = "Service is offline.";
+                model.LaunchResult = WarheadLaunchResultFactory.Fail("Service is offline.");
+                model.ServiceIsOffline = true;
                 return View(model);
             }
+
             try
             {
-                _warheadsService.Launch(model.Passphrase);
+                model.LaunchResult = await _warheadsService.Launch(model.Passphrase);
             }
             catch (WrongPassphraseException)
             {
@@ -44,12 +49,7 @@ namespace ThermoNuclearWar.Web.Controllers
             }
             catch (AlreadyLaunchedException)
             {
-                model.ServiceError = "Too soon to launch again. Please allow 5 minutes to elapse.";
-                return View(model);
-            }
-            catch (WarheadsApiException exception)
-            {
-                model.ServiceError = exception.Message;
+                model.LaunchResult = WarheadLaunchResultFactory.Fail(AlreadyLaunchedErrorMessage);
                 return View(model);
             }
 

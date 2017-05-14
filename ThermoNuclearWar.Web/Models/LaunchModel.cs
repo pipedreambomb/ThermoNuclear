@@ -1,5 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
 
 namespace ThermoNuclearWar.Web.Models
 {
@@ -8,6 +10,6 @@ namespace ThermoNuclearWar.Web.Models
         [Required]
         public string Passphrase { get; set; }
         public bool ServiceIsOffline { get; set; }
-        public string ServiceError { get; set; }
+        public WarheadLaunchResult LaunchResult { get; set; }
     }
 }

@@ -1,6 +1,6 @@
 using System;
 
-namespace ThermoNuclearWar.Service
+namespace ThermoNuclearWar.Service.Exceptions
 {
     public class WrongPassphraseException : Exception {}
 }

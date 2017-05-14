@@ -1,7 +1,12 @@
 using System;
 using System.Threading.Tasks;
 using IO.Swagger.Api;
+using IO.Swagger.Client;
 using IO.Swagger.Model;
+using Newtonsoft.Json;
+using ThermoNuclearWar.Service.Exceptions;
+using ThermoNuclearWar.Service.StaticWrappers;
+using static IO.Swagger.Model.WarheadLaunchResult.ResultEnum;
 using static IO.Swagger.Model.WarheadStatusResult.StatusEnum;
 
 namespace ThermoNuclearWar.Service
@@ -9,6 +14,8 @@ namespace ThermoNuclearWar.Service
     public class WarheadsService : IWarheadsService
     {
         internal const string CorrectPassphrase = "NICEGAMEOFCHESS";
+        internal static string CorrectPasscode => $"{DateTime.UtcNow:yyMMdd}-{CorrectPassphrase}";
+
         private readonly IWarheadsApi _apiClient;
         private readonly ILastLaunchedProvider _lastLaunchedProvider;
 
@@ -28,17 +35,24 @@ namespace ThermoNuclearWar.Service
             return status.Status == Offline;
         }
 
-        public async Task Launch(string passphrase)
+        public async Task<WarheadLaunchResult> Launch(string passphrase)
         {
             if(passphrase != CorrectPassphrase) throw new WrongPassphraseException();
 
             if(_lastLaunchedProvider.LastLaunched > DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(5)))
                 throw new AlreadyLaunchedException();
 
-            var result = await _apiClient.WarheadsLaunchAsync(passphrase);
-
-            if (result.Result == WarheadLaunchResult.ResultEnum.Failure)
-                throw new WarheadsApiException(result.Message);
+            try
+            {
+                await _apiClient.WarheadsLaunchAsync(CorrectPasscode);
+            }
+            catch (ApiException exception)
+            {
+                return JsonConvert.DeserializeObject<WarheadLaunchResult>(exception.ErrorContent);
+            }
+            // no exception, therefore a success
+            _lastLaunchedProvider.LastLaunched = DateTime.UtcNow;
+            return new WarheadLaunchResult { Result = Success};
         }
     }
 }
