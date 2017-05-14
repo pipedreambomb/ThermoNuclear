@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using System.Web.Mvc;
 using FluentAssertions;
 using FluentAssertions.Mvc;
@@ -28,10 +29,10 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
         public class Launch_GET : WarheadsControllerTests
         {
             [Test]
-            public void It_returns_the_default_view()
+            public async Task It_returns_the_default_view()
             {
                 // Act
-                ActionResult actual = SUT.Launch();
+                ActionResult actual = await SUT.Launch();
 
                 // Assert
                 actual.Should()
@@ -40,10 +41,10 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
             }
 
             [Test]
-            public void It_returns_a_model()
+            public async Task It_returns_a_model()
             {
                 // Act
-                ActionResult actual = SUT.Launch();
+                ActionResult actual = await SUT.Launch();
 
                 // Assert
                 object actualModel = actual.Should()
@@ -55,14 +56,14 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
 
             [TestCase(true)]
             [TestCase(false)]
-            public void It_sets_model_status_from_service(bool isOffline)
+            public async Task It_sets_model_status_from_service(bool isOffline)
             {
                 // Arrange
                 _warheadsService.IsOffline()
                                 .Returns(isOffline);
 
                 // Act
-                ActionResult actual = SUT.Launch();
+                ActionResult actual = await SUT.Launch();
 
                 // Assert
                 var actualModel = actual.Should()
@@ -83,7 +84,7 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
                     _warheadsService.IsOffline().Returns(true);
 
                     // Act
-                    Action act = () => SUT.Launch(new LaunchModel());
+                    Func<Task> act = async () => await SUT.Launch(new LaunchModel());
 
                     // Assert
                     act.ShouldThrow<WarheadsServiceOfflineException>();
@@ -101,7 +102,7 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
                                     .Throw<WrongPassphraseException>();
 
                     // Act
-                    Action act = () => SUT.Launch(new LaunchModel());
+                    Func<Task> act = async () => await SUT.Launch(new LaunchModel());
 
                     // Assert
                     act.ShouldThrow<WrongPassphraseException>();
@@ -111,7 +112,7 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
             public class When_status_is_online_and_passcode_is_correct : WarheadsControllerTests
             {
                 [Test]
-                public void It_returns_empty_result()
+                public async Task It_returns_empty_result()
                 {
                     // Arrange
                     string correctPassphrase = new Fixture().Create<string>();
@@ -120,7 +121,7 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
                                     .Throw<WrongPassphraseException>();
 
                     // Act
-                    ActionResult actual = SUT.Launch(new LaunchModel {Passphrase = correctPassphrase});
+                    ActionResult actual = await SUT.Launch(new LaunchModel {Passphrase = correctPassphrase});
 
                     // Assert
                     actual.Should().BeEmptyResult();
@@ -131,11 +132,11 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
         public class When_already_launched_in_last_five_minutes : WarheadsControllerTests
         {
             [Test]
-            public void It_throws()
+            public async Task It_throws()
             {
                 // Act
-                SUT.Launch(new LaunchModel());
-                Action act = () => SUT.Launch(new LaunchModel());
+                await SUT.Launch(new LaunchModel());
+                Func<Task<ActionResult>> act = async () => await SUT.Launch(new LaunchModel());
 
                 // Assert
                 act.ShouldThrow<AlreadyLaunchedException>();
@@ -144,15 +145,14 @@ namespace ThermoNuclearWar.Web.Tests.Controllers
         public class When_already_launched_in_over_five_minutes : WarheadsControllerTests
         {
             [Test]
-            public void It_works()
+            public async Task It_works()
             {
                 // Act
-                SUT.Launch(new LaunchModel());
+                await SUT.Launch(new LaunchModel());
                 SUT.LastLaunched = DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(value: 5)
                                                                     // allow extra time for the test to run
                                                                     .Add(TimeSpan.FromSeconds(value: 10)));
-                ;
-                Action act = () => SUT.Launch(new LaunchModel());
+                Func<Task> act = async () => await SUT.Launch(new LaunchModel());
 
                 // Assert
                 act.ShouldNotThrow();

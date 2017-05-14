@@ -120,8 +120,8 @@
       <Project>{3B6A8A2E-D262-471F-908E-C3E9F582A41B}</Project>
       <Name>ThermoNuclearWar.Service</Name>
     </ProjectReference>
-    <ProjectReference Include="..\ThermoNuclearWar\ThermoNuclearWar.Web.csproj">
-      <Project>{0B1ADBBD-AA79-4826-9DF8-1E5B09D0F791}</Project>
+    <ProjectReference Include="..\ThermoNuclearWar.Web\ThermoNuclearWar.Web.csproj">
+      <Project>{0b1adbbd-aa79-4826-9df8-1e5b09d0f791}</Project>
       <Name>ThermoNuclearWar.Web</Name>
     </ProjectReference>
   </ItemGroup>

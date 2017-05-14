@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using System.Web.Mvc;
 using ThermoNuclearWar.Service;
 using ThermoNuclearWar.Web.Models;
@@ -23,15 +24,15 @@ namespace ThermoNuclearWar.Web.Controllers
         internal DateTime? LastLaunched { get; set; }
 
         [HttpGet]
-        public ActionResult Launch()
+        public async Task<ActionResult> Launch()
         {
-            return View(new LaunchModel {ServiceIsOffline = _warheadsService.IsOffline()});
+            return View(new LaunchModel {ServiceIsOffline = await _warheadsService.IsOffline()});
         }
 
         [HttpPost]
-        public ActionResult Launch(LaunchModel model)
+        public async Task<ActionResult> Launch(LaunchModel model)
         {
-            if(_warheadsService.IsOffline()) throw new WarheadsServiceOfflineException();
+            if(await _warheadsService.IsOffline()) throw new WarheadsServiceOfflineException();
             if(LastLaunched > DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(5))) throw new AlreadyLaunchedException();
 
             _warheadsService.Launch(model.Passphrase);
